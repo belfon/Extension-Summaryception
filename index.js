@@ -1,5 +1,5 @@
 /**
- * Summaryception v5.5.0 — Layered Recursive Summarization for SillyTavern
+ * Summaryception v5.5.1 — Layered Recursive Summarization for SillyTavern
  *
  * NON-DESTRUCTIVE: Uses SillyTavern's native /hide and /unhide commands
  * to exclude summarized messages from LLM context while keeping them
@@ -30,23 +30,31 @@ const defaultSettings = Object.freeze({
     snippetsPerLayer: 30,
     snippetsPerPromotion: 3,
     maxLayers: 5,
-    injectionTemplate: '[Summary of past events: {{summary}}]',
+    injectionTemplate: '<summary>\n{{summary}}\n</summary>\n[The following is the current live roleplay, continuing from the above summary.]',
 
     summarizerSystemPrompt:
         'You are a precise narrative-state tracker. You output only the summary line — no preamble, no commentary, no markdown.',
 
     summarizerUserPrompt:
-        `<player_name>{{player_name}}</player_name>
-    <prior_context>{{context_str}}</prior_context>
-    <passage_in_question>{{story_txt}}</passage_in_question>
+        `<player_name>
+{{player_name}}
+</player_name>
 
-    Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
+<prior_context>
+{{context_str}}
+</prior_context>
 
-    Focus on: character interactions, dialogue tone, and relationship dynamics; emotional beats and character motivations; atmosphere, mood, and sensory details that establish tone; narrative themes and subtext; names, places, and time references; plot developments and unresolved tensions; details that distinguish this moment from any other.
+<passage_in_question>
+{{story_txt}}
+</passage_in_question>
 
-    Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
-    Skip any passages that are empty, unclear, or lack significant content.
-    Write in short phrases, no more than 20; output must be a single line:`,
+Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
+
+Focus on: character interactions, dialogue tone, and relationship dynamics; emotional beats and character motivations; atmosphere, mood, and sensory details that establish tone; narrative themes and subtext; names, places, and time references; plot developments and unresolved tensions; details that distinguish this moment from any other.
+
+Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
+Skip any passages that are empty, unclear, or lack significant content.
+Write in short phrases, no more than 20; output must be a single line:`,
 
     promptPreset: 'narrative',  // 'narrative' | 'gamestate' | 'custom'
     savedCustomPrompts: {},        // { name: promptText } — named custom prompt slots
@@ -82,29 +90,45 @@ const defaultSettings = Object.freeze({
 // ─── Prompt Presets ──────────────────────────────────────────────────
 
 const PROMPT_PRESETS = {
-    narrative: `<player_name>{{player_name}}</player_name>
-    <prior_context>{{context_str}}</prior_context>
-    <passage_in_question>{{story_txt}}</passage_in_question>
+    narrative: `<player_name>
+{{player_name}}
+</player_name>
 
-    Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
+<prior_context>
+{{context_str}}
+</prior_context>
 
-    Focus on: character interactions, dialogue tone, and relationship dynamics; emotional beats and character motivations; atmosphere, mood, and sensory details that establish tone; narrative themes and subtext; names, places, and time references; plot developments and unresolved tensions; details that distinguish this moment from any other.
+<passage_in_question>
+{{story_txt}}
+</passage_in_question>
 
-    Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
-    Skip any passages that are empty, unclear, or lack significant content.
-    Write in short phrases, no more than 20; output must be a single line:`,
+Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
 
-    gamestate: `<player_name>{{player_name}}</player_name>
-    <prior_context>{{context_str}}</prior_context>
-    <passage_in_question>{{story_txt}}</passage_in_question>
+Focus on: character interactions, dialogue tone, and relationship dynamics; emotional beats and character motivations; atmosphere, mood, and sensory details that establish tone; narrative themes and subtext; names, places, and time references; plot developments and unresolved tensions; details that distinguish this moment from any other.
 
-    Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
+Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
+Skip any passages that are empty, unclear, or lack significant content.
+Write in short phrases, no more than 20; output must be a single line:`,
 
-    Focus on: story progression, plot points, plans, tasks, quests; location changes and current location (reference by name); location interactables encountered, used, or discovered; significant changes to player, NPCs, locations, world, or setting.
+    gamestate: `<player_name>
+{{player_name}}
+</player_name>
 
-    Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
-    Skip any passages that are empty, unclear, or lack significant content.
-    Write in short phrases, no more than 20; output must be a single line:`,
+<prior_context>
+{{context_str}}
+</prior_context>
+
+<passage_in_question>
+{{story_txt}}
+</passage_in_question>
+
+Summarize only the necessary elements from the passage_in_question to coherently continue the prior_context.
+
+Focus on: story progression, plot points, plans, tasks, quests; location changes and current location (reference by name); location interactables encountered, used, or discovered; significant changes to player, NPCs, locations, world, or setting.
+
+Exclude anything insubstantial, fluff, atmospheric details, or events already covered in Prior Context.
+Skip any passages that are empty, unclear, or lack significant content.
+Write in short phrases, no more than 20; output must be a single line:`,
 
     custom: null, // Uses whatever is in the textarea
 };
@@ -2294,6 +2318,45 @@ function bindUIEvents() {
         };
         input.click();
     });
+
+    $(document).on('click', '#sc_reset_defaults', function () {
+        if (!confirm(
+            'Reset all Advanced Settings to defaults?\n\n' +
+            'This will reset sliders, prompts, injection template, and strip patterns.\n' +
+            'It will NOT clear your summary memory or connection settings.'
+        )) return;
+
+        const s = getSettings();
+
+        // Reset sliders
+        s.verbatimTurns = defaultSettings.verbatimTurns;
+        s.turnsPerSummary = defaultSettings.turnsPerSummary;
+        s.snippetsPerLayer = defaultSettings.snippetsPerLayer;
+        s.snippetsPerPromotion = defaultSettings.snippetsPerPromotion;
+        s.maxLayers = defaultSettings.maxLayers;
+
+        // Reset prompts
+        s.summarizerSystemPrompt = defaultSettings.summarizerSystemPrompt;
+        s.summarizerUserPrompt = defaultSettings.summarizerUserPrompt;
+        s.promptPreset = defaultSettings.promptPreset;
+        s.injectionTemplate = defaultSettings.injectionTemplate;
+        s.stripPatterns = [...defaultSettings.stripPatterns];
+        s.summarizerResponseLength = defaultSettings.summarizerResponseLength;
+
+        // Reset debug
+        s.debugMode = defaultSettings.debugMode;
+        s.traceMode = defaultSettings.traceMode;
+
+        saveSettings();
+        updateInjection();
+        updateUI();
+
+        toastr.success(
+            'Advanced settings reset to defaults. Connection settings and summary memory were preserved.',
+            'Summaryception',
+            { timeOut: 4000 }
+        );
+    });
 }
 
 // ─── Connection Settings UI ──────────────────────────────────────────
@@ -2587,6 +2650,6 @@ async function fetchProfilesFallback(selectElement, currentValue) {
     eventSource.on(event_types.APP_READY, () => {
         updateInjection();
         updateUI();
-        console.log(LOG_PREFIX, 'v5.5.0 loaded. Connection Settings available');
+        console.log(LOG_PREFIX, 'v5.5.1 loaded. Connection Settings available');
     });
 })();
