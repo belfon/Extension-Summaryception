@@ -1,5 +1,5 @@
 /**
- * Summaryception v5.5.2 — Layered Recursive Summarization for SillyTavern
+ * Summaryception v5.5.3 — Layered Recursive Summarization for SillyTavern
  *
  * NON-DESTRUCTIVE: Uses SillyTavern's native /hide and /unhide commands
  * to exclude summarized messages from LLM context while keeping them
@@ -1486,26 +1486,28 @@ function assembleSummaryBlock() {
 
 // ─── Injection via setExtensionPrompt ────────────────────────────────
 
+let _lastInjected = '';
+
 function updateInjection() {
     try {
         const { setExtensionPrompt } = SillyTavern.getContext();
         const s = getSettings();
 
         if (!s.enabled) {
-            setExtensionPrompt(MODULE_NAME, '', 1, 0, false, 0);
+            if (_lastInjected !== '') {
+                setExtensionPrompt(MODULE_NAME, '', 0, 0, false, 0);
+                _lastInjected = '';
+            }
             return;
         }
 
         const summaryBlock = assembleSummaryBlock();
-        if (!summaryBlock) {
-            setExtensionPrompt(MODULE_NAME, '', 1, 0, false, 0);
-            return;
-        }
+        if (summaryBlock === _lastInjected) return;
 
-        const depth = s.verbatimTurns * 2;
-        setExtensionPrompt(MODULE_NAME, summaryBlock, 1, depth, false, 0);
+        setExtensionPrompt(MODULE_NAME, summaryBlock || '', 0, 0, false, 0);
+        _lastInjected = summaryBlock || '';
 
-        log(`Injection updated: ${summaryBlock.length} chars at depth ${depth}`);
+        log(`Injection updated: ${(summaryBlock || '').length} chars`);
     } catch (e) {
         log('updateInjection error:', e);
     }
@@ -2740,6 +2742,6 @@ async function fetchProfilesFallback(selectElement, currentValue) {
     eventSource.on(event_types.APP_READY, () => {
         updateInjection();
         updateUI();
-        console.log(LOG_PREFIX, 'v5.5.2 loaded. Connection Settings available');
+        console.log(LOG_PREFIX, 'v5.5.3 loaded. Connection Settings available');
     });
 })();
