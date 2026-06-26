@@ -279,17 +279,11 @@ Restart SillyTavern and enable the extension.
 
 ---
 
-## Community Forks
+## This Fork
 
-These forks extend Summaryception with specialized features. They use the same internal module name, so **install only one at a time** — your existing settings and per-chat memory will carry over.
+This fork changes the format of the summary chunk injections to bullet points utilizing hyphens. It is my personal opinion and experience that LLMs utilize memories that are in bullet point format better and more reliably than in long paragraph format. With this fork, your context injection looks like this from this extension:
 
-### [Per-Character Memory Banks](https://github.com/dogoo9/Extension-Summaryception) by dogoo9
-
-Keeps separate summary memory for each character card in the same chat. Useful for group chats or stories where you switch between characters and don't want their memories bleeding together.
-
-### [Lorebook Ingestion](https://github.com/jeromehbonaparte-star/Extension-Summaryception-Lorebook) by Romuromylus
-
-Automatically extracts stable facts (character traits, locations, items) from summaries and proposes them as World Info entries. Summaries handle events and state changes; lorebook entries handle things that should never be forgotten across layers. Includes a review queue so nothing gets written without your approval.
+<img width="367" height="382" alt="image" src="https://github.com/user-attachments/assets/08c6fb7c-af16-401a-ad58-c299715a5e8f" />
 
 ---
 
