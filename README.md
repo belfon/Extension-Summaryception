@@ -1,5 +1,5 @@
 # 🧠 Summaryception - "Bullet Point" Fork 
-- This fork attempts to change the format of the summaries to bullet points with preceding hyphens.
+- This changes the format of the summary "snippets" to bullet point format with preceding hyphens. Just a change on one line. Otherwise, identical to main Summaryception 90ff020.
 
 ### Layered Recursive Memory for SillyTavern
 
